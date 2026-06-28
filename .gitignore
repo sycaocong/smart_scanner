@@ -1,0 +1,15 @@
+.git/
+.vscode/
+*.log
+*.exe
+*.dll
+*.so
+*.dylib
+build/
+dist/
+bin/
+go.sum
+.env
+.env.local
+mock-node.exe
+scanner.exe

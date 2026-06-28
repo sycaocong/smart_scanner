@@ -1,0 +1,344 @@
+# 多链扫链系统配置
+
+# 应用配置
+app:
+  name: "multi-chain-scanner"
+  version: "1.0.0"
+  environment: "production"
+  log_level: "info"
+  
+# 服务配置
+server:
+  http_port: 8080
+  grpc_port: 9090
+  metrics_port: 9091
+  
+# 数据库配置
+database:
+  # 主库（写）
+  master:
+    driver: "mysql"
+    host: "localhost"
+    port: 3306
+    username: "scanner"
+    password: "scanner_password"
+    database: "scanner_master"
+    max_open_conns: 100
+    max_idle_conns: 20
+    conn_max_lifetime: "1h"
+  
+  # 从库（读）
+  slave:
+    driver: "mysql"
+    host: "localhost"
+    port: 3307
+    username: "scanner"
+    password: "scanner_password"
+    database: "scanner_slave"
+    max_open_conns: 100
+    max_idle_conns: 20
+    conn_max_lifetime: "1h"
+  
+  # PostgreSQL（可选）
+  postgres:
+    enabled: false
+    host: "localhost"
+    port: 5432
+    username: "scanner"
+    password: "scanner_password"
+    database: "scanner"
+    ssl_mode: "disable"
+
+# Redis 配置
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+  pool_size: 100
+  min_idle_conns: 10
+  
+# Elasticsearch 配置
+elasticsearch:
+  enabled: true
+  addresses:
+    - "http://localhost:9200"
+  username: ""
+  password: ""
+  index_prefix: "scanner"
+  
+# Kafka 配置
+kafka:
+  brokers:
+    - "localhost:9092"
+    - "localhost:9093"
+    - "localhost:9094"
+  client_id: "scanner"
+  group_id: "scanner-group"
+  topics:
+    raw_block: "raw-block"
+    normalized_tx: "normalized-tx"
+    reorg_event: "reorg-event"
+    dlq: "dead-letter-queue"
+  
+# RocketMQ 配置（可选）
+rocketmq:
+  enabled: false
+  name_servers: "localhost:9876"
+  group_id: "scanner-group"
+  
+# 分布式锁配置
+distributed_lock:
+  provider: "redis" # redis, etcd
+  redis:
+    addr: "localhost:6379"
+    password: ""
+    db: 1
+  etcd:
+    endpoints:
+      - "localhost:2379"
+    dial_timeout: "5s"
+    
+# 扫链调度配置
+scanner:
+  # 并发配置
+  concurrency:
+    max_workers_per_chain: 10
+    batch_size: 100
+    max_retries: 3
+    retry_delay: "1s"
+  
+  # 水位控制
+  watermark:
+    check_interval: "10s"
+    reorg_detection_depth: 128
+    finalization_confirmations: 32
+  
+  # 分片配置
+  sharding:
+    enabled: true
+    shard_count: 16
+    strategy: "block_number" # block_number, address
+  
+# 链配置
+chains:
+  # Ethereum 主网
+  ethereum:
+    enabled: true
+    chain_id: 1
+    chain_type: "evm"
+    block_time: "12s"
+    finalization_type: "finalized"
+    
+    # RPC 节点配置
+    rpc_nodes:
+      - url: "https://eth-mainnet.alchemyapi.io/v2/YOUR_API_KEY"
+        weight: 100
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://mainnet.infura.io/v3/YOUR_PROJECT_ID"
+        weight: 80
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://ethereum.publicnode.com"
+        weight: 60
+        timeout: "10s"
+        max_conns: 50
+    
+    # 健康检查配置
+    health_check:
+      enabled: true
+      interval: "30s"
+      timeout: "5s"
+      failure_threshold: 3
+      success_threshold: 2
+    
+    # 起始区块配置
+    start_block: 18200000
+    confirmations: 12
+    
+    # 合约白名单
+    contracts:
+      - "0xdAC17F958D2ee523a2206206994597C13D831ec7" # USDT
+      - "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" # USDC
+      - "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599" # WBTC
+  
+  # BSC 主网
+  bsc:
+    enabled: true
+    chain_id: 56
+    chain_type: "evm"
+    block_time: "3s"
+    finalization_type: "finalized"
+    
+    rpc_nodes:
+      - url: "https://bsc-dataseed.binance.org"
+        weight: 100
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://bsc-dataseed1.defibit.io"
+        weight: 80
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://bsc.publicnode.com"
+        weight: 60
+        timeout: "10s"
+        max_conns: 50
+    
+    health_check:
+      enabled: true
+      interval: "30s"
+      timeout: "5s"
+      failure_threshold: 3
+      success_threshold: 2
+    
+    start_block: 35000000
+    confirmations: 20
+    
+    contracts:
+      - "0x55d398326f99059fF775485246999027B3197955" # USDT
+      - "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d" # USDC
+
+  # Polygon 主网
+  polygon:
+    enabled: true
+    chain_id: 137
+    chain_type: "evm"
+    block_time: "2s"
+    finalization_type: "finalized"
+    
+    rpc_nodes:
+      - url: "https://polygon-rpc.com"
+        weight: 100
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://rpc.ankr.com/polygon"
+        weight: 80
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://polygon-bor.publicnode.com"
+        weight: 60
+        timeout: "10s"
+        max_conns: 50
+    
+    health_check:
+      enabled: true
+      interval: "30s"
+      timeout: "5s"
+      failure_threshold: 3
+      success_threshold: 2
+    
+    start_block: 45000000
+    confirmations: 128
+    
+    contracts:
+      - "0xc2132D05D31c914a87C6611C10748AEb04B58e8F" # USDT
+      - "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" # USDC
+
+  # Solana 主网
+  solana:
+    enabled: false
+    chain_id: "solana-mainnet"
+    chain_type: "solana"
+    block_time: "400ms"
+    finalization_type: "confirmed"
+    
+    rpc_nodes:
+      - url: "https://api.mainnet-beta.solana.com"
+        weight: 100
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://solana-api.projectserum.com"
+        weight: 80
+        timeout: "10s"
+        max_conns: 50
+    
+    health_check:
+      enabled: true
+      interval: "30s"
+      timeout: "5s"
+      failure_threshold: 3
+      success_threshold: 2
+    
+    start_slot: 200000000
+    confirmations: 32
+
+  # Tron 主网
+  tron:
+    enabled: false
+    chain_id: "tron-mainnet"
+    chain_type: "tron"
+    block_time: "3s"
+    finalization_type: "irreversible"
+    
+    rpc_nodes:
+      - url: "https://api.trongrid.io"
+        weight: 100
+        timeout: "10s"
+        max_conns: 50
+      - url: "https://api.tronstack.io"
+        weight: 80
+        timeout: "10s"
+        max_conns: 50
+    
+    health_check:
+      enabled: true
+      interval: "30s"
+      timeout: "5s"
+      failure_threshold: 3
+      success_threshold: 2
+    
+    start_block: 50000000
+    confirmations: 19
+
+# 监控配置
+monitoring:
+  # Prometheus 配置
+  prometheus:
+    enabled: true
+    path: "/metrics"
+  
+  # 健康检查配置
+  health:
+    enabled: true
+    path: "/health"
+    detailed: false
+  
+  # 告警配置
+  alerts:
+    enabled: true
+    webhook_url: "http://localhost:5000/alerts"
+    thresholds:
+      block_lag: 100
+      error_rate: 0.05
+      queue_depth: 10000
+
+# 日志配置
+logging:
+  level: "info"
+  format: "json"
+  output: "stdout"
+  file:
+    enabled: true
+    path: "./logs/scanner.log"
+    max_size: 100
+    max_backups: 10
+    max_age: 30
+    compress: true
+
+# 部署配置
+deployment:
+  replicas: 3
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+  
+  autoscaling:
+    enabled: true
+    min_replicas: 2
+    max_replicas: 10
+    target_cpu_utilization: 70
+    target_memory_utilization: 80
