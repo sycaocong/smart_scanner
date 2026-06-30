@@ -312,5 +312,7 @@ Content-Type: application/json
 
 如有问题或建议，请通过以下方式联系：
 
-- 提交 [Issue](https://github.com/your-username/smart_scanner/issues)
-- 发送邮件至 support@smartscanner.io
+<div align='center'>
+    <img src="./微信图片_20260630212706_17_2.jpg" alt="作者二维码" width="30%">
+    <p>发送邮件至 494919536@qq.com</p>
+</div>
